@@ -20,7 +20,7 @@
  * Utility class to check and generate a "clean"  options object
  */
 
-export default class OptionsChecker {
+export class OptionsChecker {
 
     /**
      * Constructs an OptionsChecker object.

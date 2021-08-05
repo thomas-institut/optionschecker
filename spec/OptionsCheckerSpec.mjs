@@ -17,7 +17,7 @@
  */
 
 
-import OptionsChecker from '../OptionsChecker.mjs';
+import {OptionsChecker} from '../OptionsChecker.mjs';
 
 
 describe("OptionsChecker", function() {
