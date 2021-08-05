@@ -19,35 +19,43 @@
 /**
  * Utility class to check and generate a "clean"  options object
  *
- * The optionsDefinition object passed to the  constructor should have as properties the
- * definition of each option to be checked. Each property, in turn, has the following
- * properties:
  *
- *   optionName:  {
- *     required: <true/false>  // optional, if not present it defaults to false (i.e., the option is not required)
- *     default:  <default Value> // if required===true, the default value will be ignored
- *     type: 'type_string'   // optional type requirement for the option
- *         type_string can be a Javascript type name:  'string', 'number', 'object', 'boolean', 'function'
- *         it can also be one of the following:
- *             'NonEmptyString'
- *             'NumberGreaterThanZero'
- *             'NonZeroNumber'
- *             'Array'
- *
- *     objectClass: SomeClass // if present and type==='object', the given value is checked to be a instance of this class
- *   }
  */
 
-export class OptionsChecker {
+export default class OptionsChecker {
 
     /**
+     * Constructs an OptionsChecker object.
+     *
+     * The optionsDefinition object  should have as properties the
+     * definition of each option to be checked. Each property, in turn, should have the following
+     * properties:
+     *
+     *   optionName:  {
+     *     required: <true/false>  // optional, if not present it defaults to false (i.e., the option is not required)
+     *     default:  <default Value> // if required===true, the default value will be ignored
+     *     type: 'type_string'   // optional type requirement for the option
+     *         type_string can be a Javascript type name:  'string', 'number', 'object', 'boolean', 'function'
+     *         it can also be one of the following:
+     *             'NonEmptyString'
+     *             'NumberGreaterThanZero'
+     *             'NonZeroNumber'
+     *             'Array'
+     *
+     *     objectClass: SomeClass // if present and type==='object', the given value is checked to be a instance of this class
+     *     checker: function  (valueToCheck) =>  { ... return true/false }, a function that performs an additional
+     *          check on a value
+     *     checkDescription: 'some description', a string used to report failures from the checker function
+     *   }
      *
      * @param {object} optionsDefinition
-     * @param {string} contextStr
+     * @param {string} contextStr  id string to use in exceptions, errors and warnings
+     * @param {boolean} verbose  if true, errors and warnings will be reported in the console
      */
-    constructor(optionsDefinition, contextStr) {
+    constructor(optionsDefinition, contextStr, verbose = false) {
         this.optionsDefinition = optionsDefinition;
         this.contextStr = contextStr;
+        this.verbose = verbose
     }
 
     /**
@@ -67,10 +75,10 @@ export class OptionsChecker {
             if (this._isUndefined(optionsObject[optionName])) {
                 // optionName is NOT  in optionsObject
                 if (optionDefinition.required) {
-                    this.error(`Required option '${optionName}' not found`);
+                    this._throwError(`Required option '${optionName}' not found`);
                 }
                 if (this._isUndefined(optionDefinition.default)) {
-                    this.error(`No default defined for option '${optionName}'`);
+                    this._throwError(`No default defined for option '${optionName}'`);
                 }
                 cleanOptions[optionName] = optionDefinition.default;
                 continue;
@@ -104,7 +112,7 @@ export class OptionsChecker {
             }
             else {
                 if (this._isUndefined(optionDefinition.default)) {
-                    this.error(`Given ${optionName} is not valid, but there is no default value defined`);
+                    this._throwError(`Given ${optionName} is not valid, but there is no default value defined`);
                 }
                 else {
                     cleanOptions[optionName] = optionDefinition.default;
@@ -114,17 +122,21 @@ export class OptionsChecker {
         return cleanOptions;
     }
 
+    getDefaults() {
+        return this.getCleanOptions({})
+    }
+
     _genErrorMessage(msg) {
         return `${this.contextStr}: ${msg}`;
     }
 
-    error(message) {
-        console.error(this._genErrorMessage(message));
+    _throwError(message) {
+        this.verbose && console.error(this._genErrorMessage(message));
         throw this._genErrorMessage(message);
     }
 
     _logWarnMessage(message) {
-        console.warn(this._genErrorMessage(message));
+        this.verbose && console.warn(this._genErrorMessage(message));
     }
 
     _isOfType(value, type) {
@@ -135,20 +147,28 @@ export class OptionsChecker {
             case 'boolean':
             case 'function':
                 // normal javascript type
-                return (typeof (value) === type);
+                return (typeof (value) === type)
+
+            case 'Bool':
+            case 'bool':
+                return (typeof (value)=== 'boolean')
+
             case 'NonEmptyString':
-                return typeof (value) === 'string' && value !== '';
+                return typeof (value) === 'string' && value !== ''
+
             case 'NumberGreaterThanZero':
-                return typeof (value) === 'number' && value > 0;
+                return typeof (value) === 'number' && value > 0
+
 
             case 'NonZeroNumber':
-                return typeof (value) === 'number' && value !== 0;
+                return typeof (value) === 'number' && value !== 0
 
             case 'Array':
             case 'array':
-                return Array.isArray(value);
+                return Array.isArray(value)
+
             default:
-                this.error(`Unsupported type '${type}' found in options definition`);
+                this._throwError(`Unsupported type '${type}' found in options definition`)
         }
     }
 

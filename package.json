@@ -2,15 +2,15 @@
   "name": "@thomas-inst/optionschecker",
   "version": "1.0.1",
   "description": "Check and get a clean options object from spec",
-  "main": "OptionsChecker.js",
-  "module": "OptionsChecker.js",
+  "main": "OptionsChecker.mjs",
+  "module": "OptionsChecker.mjs",
   "devDependencies": {
     "jasmine": "^3.8.0",
     "webpack": "^5.1.3",
     "webpack-cli": "^4.1.0"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jasmine",
     "build": "webpack"
   },
   "author": "Rafael Nájera <rafael.najera@uni-koeln.de>",
