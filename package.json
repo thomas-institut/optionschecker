@@ -13,6 +13,10 @@
     "test": "jasmine",
     "build": "webpack"
   },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:thomas-institut/optionschecker.git"
+  },
   "author": "Rafael Nájera <rafael.najera@uni-koeln.de>",
   "license": "GPL-3.0-or-later"
 }
