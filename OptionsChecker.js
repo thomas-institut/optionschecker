@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2019-2020 Universität zu Köln
+ *  Copyright (C) 2019-2021 Universität zu Köln
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
+
 /**
  * Utility class to check and generate a "clean"  options object
  *
@@ -34,16 +35,99 @@
  *             'Array'
  *
  *     objectClass: SomeClass // if present and type==='object', the given value is checked to be a instance of this class
- *     checker: function (v) { .... }  // optional function that performs additional checks on the given value
- *     checkDescription:  <string description of additional check asdf
  *   }
  */
-class OptionsChecker {
+
+export class OptionsChecker {
+
+    /**
+     *
+     * @param {object} optionsDefinition
+     * @param {string} contextStr
+     */
     constructor(optionsDefinition, contextStr) {
         this.optionsDefinition = optionsDefinition;
         this.contextStr = contextStr;
     }
-    isOfType(value, type) {
+
+    /**
+     *
+     * @param {object} optionsObject
+     * @return {object}
+     *
+     */
+    getCleanOptions(optionsObject) {
+
+        let cleanOptions = {};
+        for (const optionName in this.optionsDefinition) {
+            if (!this.optionsDefinition.hasOwnProperty(optionName)) {
+                continue;
+            }
+            let optionDefinition = this.optionsDefinition[optionName];
+            if (this._isUndefined(optionsObject[optionName])) {
+                // optionName is NOT  in optionsObject
+                if (optionDefinition.required) {
+                    this.error(`Required option '${optionName}' not found`);
+                }
+                if (this._isUndefined(optionDefinition.default)) {
+                    this.error(`No default defined for option '${optionName}'`);
+                }
+                cleanOptions[optionName] = optionDefinition.default;
+                continue;
+            }
+            // optionName is present in optionsObject
+            let typeOK = true;
+            let additionalCheckOk = true;
+            // first, check just for the given type
+            if (this._isOfType(optionDefinition.type, 'NonEmptyString') &&
+                !this._isOfType(optionsObject[optionName], optionDefinition.type)) {
+                this._logWarnMessage(`${optionName} must be ${optionDefinition.type}, ` +
+                    `${this._toNiceString(optionsObject[optionName])} given, will assign default`);
+                typeOK = false;
+            }
+            // if we have an objectClass, check for it
+            if (typeOK && optionDefinition.type === 'object' && !this._isUndefined(optionDefinition['objectClass'])) {
+                if (!(optionsObject[optionName] instanceof optionDefinition['objectClass'])) {
+                    this._logWarnMessage(`${optionName} must be an object of class ${optionDefinition['objectClass'].name},` +
+                        ` ${optionsObject[optionName].constructor.name} given, will assign default`);
+                    typeOK = false;
+                }
+            }
+            if (this._isOfType(optionDefinition['checker'], 'function') &&
+                !optionDefinition['checker'](optionsObject[optionName])) {
+                this._logWarnMessage(`${optionName} must be ${optionDefinition['checkDescription']}, ` +
+                    `${this._toNiceString(optionsObject[optionName])} given, will assign default`);
+                additionalCheckOk = false;
+            }
+            if (typeOK && additionalCheckOk) {
+                cleanOptions[optionName] = optionsObject[optionName];
+            }
+            else {
+                if (this._isUndefined(optionDefinition.default)) {
+                    this.error(`Given ${optionName} is not valid, but there is no default value defined`);
+                }
+                else {
+                    cleanOptions[optionName] = optionDefinition.default;
+                }
+            }
+        }
+        return cleanOptions;
+    }
+
+    _genErrorMessage(msg) {
+        return `${this.contextStr}: ${msg}`;
+    }
+
+    error(message) {
+        console.error(this._genErrorMessage(message));
+        throw this._genErrorMessage(message);
+    }
+
+    _logWarnMessage(message) {
+        console.warn(this._genErrorMessage(message));
+    }
+
+    _isOfType(value, type) {
         switch (type) {
             case 'string':
             case 'number':
@@ -68,80 +152,12 @@ class OptionsChecker {
         }
     }
 
-    isUndefined(value) {
+    _isUndefined(value) {
         return typeof (value) === 'undefined';
     }
 
-    getCleanOptions(optionsObject) {
-        let cleanOptions = {};
-        for (const optionName in this.optionsDefinition) {
-            if (!this.optionsDefinition.hasOwnProperty(optionName)) {
-                continue;
-            }
-            let optionDefinition = this.optionsDefinition[optionName];
-            if (this.isUndefined(optionsObject[optionName])) {
-                // optionName is NOT  in optionsObject
-                if (optionDefinition.required) {
-                    this.error(`Required option '${optionName}' not found`);
-                }
-                if (this.isUndefined(optionDefinition.default)) {
-                    this.error(`No default defined for option '${optionName}'`);
-                }
-                cleanOptions[optionName] = optionDefinition.default;
-                continue;
-            }
-            // optionName is present in optionsObject
-            let typeOK = true;
-            let additionalCheckOk = true;
-            // first, check just for the given type
-            if (this.isOfType(optionDefinition.type, 'NonEmptyString') &&
-                !this.isOfType(optionsObject[optionName], optionDefinition.type)) {
-                this.warn(`${optionName} must be ${optionDefinition.type}, ` +
-                    `${this.toNiceString(optionsObject[optionName])} given, will assign default`);
-                typeOK = false;
-            }
-            // if we have an objectClass, check for it
-            if (typeOK && optionDefinition.type === 'object' && !this.isUndefined(optionDefinition.objectClass)) {
-                if (!(optionsObject[optionName] instanceof optionDefinition.objectClass)) {
-                    this.warn(`${optionName} must be an object of class ${optionDefinition.objectClass.name},` +
-                        ` ${optionsObject[optionName].constructor.name} given, will assign default`);
-                    typeOK = false;
-                }
-            }
-            if (this.isOfType(optionDefinition.checker, 'function') &&
-                !optionDefinition.checker(optionsObject[optionName])) {
-                this.warn(`${optionName} must be ${optionDefinition.checkDescription}, ` +
-                    `${this.toNiceString(optionsObject[optionName])} given, will assign default`);
-                additionalCheckOk = false;
-            }
-            if (typeOK && additionalCheckOk) {
-                cleanOptions[optionName] = optionsObject[optionName];
-            }
-            else {
-                if (this.isUndefined(optionDefinition.default)) {
-                    this.error(`Given ${optionName} is not valid, but there is no default value defined`);
-                }
-                else {
-                    cleanOptions[optionName] = optionDefinition.default;
-                }
-            }
-        }
-        return cleanOptions;
-    }
-    getDefaults() {
-        return this.getCleanOptions({});
-    }
-    errorMessage(msg) {
-        return `${this.contextStr}: ${msg}`;
-    }
-    error(message) {
-        console.error(this.errorMessage(message));
-        throw this.errorMessage(message);
-    }
-    warn(message) {
-        console.warn(this.errorMessage(message));
-    }
-    toNiceString(value) {
+
+    _toNiceString(value) {
         switch (typeof (value)) {
             case 'string':
                 return `'${value}'`;

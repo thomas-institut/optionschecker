@@ -29,9 +29,9 @@ properties:
       checker: function (v) { .... }  // optional function that performs additional checks on the given value
       checkDescription:  <string description of additional check asdf
     }
-   
-   
-The context string is used when generating error and warning messages to the console. 
+
+
+The context string is used when generating error and warning messages to the console.
 
     let cleanOptions = oc.getCleanOptions(optionsObject)
 
