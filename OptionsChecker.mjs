@@ -18,8 +18,6 @@
 
 /**
  * Utility class to check and generate a "clean"  options object
- *
- *
  */
 
 export default class OptionsChecker {
@@ -131,12 +129,12 @@ export default class OptionsChecker {
     }
 
     _throwError(message) {
-        this.verbose && console.error(this._genErrorMessage(message));
+        this.verbose && console.error(this._genErrorMessage(message))
         throw this._genErrorMessage(message);
     }
 
     _logWarnMessage(message) {
-        this.verbose && console.warn(this._genErrorMessage(message));
+        this.verbose && console.warn(this._genErrorMessage(message))
     }
 
     _isOfType(value, type) {
@@ -173,7 +171,7 @@ export default class OptionsChecker {
     }
 
     _isUndefined(value) {
-        return typeof (value) === 'undefined';
+        return typeof (value) === 'undefined'
     }
 
 
@@ -183,10 +181,10 @@ export default class OptionsChecker {
                 return `'${value}'`;
             case 'object':
                 if (Array.isArray(value)) {
-                    return `[Array]`;
+                    return `[Array]`
                 }
                 if (value.constructor.name !== 'Object') {
-                    return `[${value.constructor.name}]`;
+                    return `[${value.constructor.name}]`
                 }
                 return '[Object]';
             default:
