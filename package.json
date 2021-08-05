@@ -1,6 +1,6 @@
 {
   "name": "@thomas-inst/optionschecker",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Check and get a clean options object from spec",
   "main": "OptionsChecker.mjs",
   "module": "OptionsChecker.mjs",
