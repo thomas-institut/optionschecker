@@ -1,6 +1,6 @@
 
 
-declare class OptionsChecker {
+export class OptionsChecker {
 
     constructor(constructorOptions: any, contextStr: string|null, verbose);
     setDebug(debug: boolean): void;
