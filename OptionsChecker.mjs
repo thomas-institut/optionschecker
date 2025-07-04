@@ -17,7 +17,7 @@
  */
 
 /**
- * Utility class to check and generate a "clean"  options object
+ * Utility class to check and generate a "clean" options object
  */
 
 export class OptionsChecker {
